@@ -1,5 +1,6 @@
 package net.vulkanmod.render.chunk;
 
+import net.vulkanmod.render.PipelineManager;
 import net.vulkanmod.render.chunk.build.UploadBuffer;
 import net.vulkanmod.render.chunk.util.StaticQueue;
 import net.vulkanmod.render.vertex.TerrainRenderType;
@@ -23,7 +24,7 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class DrawBuffers {
 
-    private static final int VERTEX_SIZE = TerrainShaderManager.TERRAIN_VERTEX_FORMAT.getVertexSize();
+    private static final int VERTEX_SIZE = PipelineManager.TERRAIN_VERTEX_FORMAT.getVertexSize();
     private static final int INDEX_SIZE = Short.BYTES;
     public final int index;
     private final Vector3i origin;
@@ -200,42 +201,6 @@ public class DrawBuffers {
         MemoryStack.stackPop();
 
         return drawCount;
-    }
-
-    private static void fakeIndirectCmd(VkCommandBuffer commandBuffer, IndirectBuffer indirectBuffer, int drawCount, ByteBuffer offsetBuffer) {
-        Pipeline pipeline = TerrainShaderManager.terrainShader;
-//        Drawer.getInstance().bindPipeline(pipeline);
-        pipeline.bindDescriptorSets(Renderer.getCommandBuffer(), Renderer.getCurrentFrame());
-//        pipeline.bindDescriptorSets(Drawer.getCommandBuffer(), WorldRenderer.getInstance().getUniformBuffers(), Drawer.getCurrentFrame());
-
-        ByteBuffer buffer = indirectBuffer.getByteBuffer();
-        long address = MemoryUtil.memAddress0(buffer);
-        long offsetAddress = MemoryUtil.memAddress0(offsetBuffer);
-        int baseOffset = (int) indirectBuffer.getOffset();
-        long offset;
-        int stride = 20;
-
-        int indexCount;
-        int instanceCount;
-        int firstIndex;
-        int vertexOffset;
-        int firstInstance;
-        for(int i = 0; i < drawCount; ++i) {
-            offset = i * stride + baseOffset + address;
-
-            indexCount    = MemoryUtil.memGetInt(offset + 0);
-            instanceCount = MemoryUtil.memGetInt(offset + 4);
-            firstIndex    = MemoryUtil.memGetInt(offset + 8);
-            vertexOffset  = MemoryUtil.memGetInt(offset + 12);
-            firstInstance = MemoryUtil.memGetInt(offset + 16);
-
-
-            long uboOffset = i * 16 + offsetAddress;
-
-            nvkCmdPushConstants(commandBuffer, pipeline.getLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 12, uboOffset);
-
-            vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
-        }
     }
 
 
