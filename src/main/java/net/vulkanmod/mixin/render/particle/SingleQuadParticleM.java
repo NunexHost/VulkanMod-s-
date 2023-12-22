@@ -33,8 +33,6 @@ public abstract class SingleQuadParticleM extends Particle {
 
     @Shadow public abstract float getQuadSize(float f);
 
-    @Shadow @Final private ClientLevel level; // Cache for efficiency
-
     protected SingleQuadParticleM(ClientLevel clientLevel, double d, double e, double f, double g, double h, double i) {
         super(clientLevel, d, e, f, g, h, i);
         this.quadSize = 0.1F * (this.random.nextFloat() * 0.5F + 0.5F) * 2.0F;
@@ -50,7 +48,7 @@ public abstract class SingleQuadParticleM extends Particle {
         float yOffset = (float)(Mth.lerp(f, this.yo, this.y));
         float zOffset = (float)(Mth.lerp(f, this.zo, this.z));
 
-        if (cull(xOffset, yOffset, zOffset)) {
+        if(cull(WorldRenderer.getInstance(), xOffset, yOffset, zOffset))
             return;
 
         Vec3 vec3 = camera.getPosition();
@@ -96,13 +94,13 @@ public abstract class SingleQuadParticleM extends Particle {
         return this.level.hasChunkAt(blockPos) ? LevelRenderer.getLightColor(this.level, blockPos) : 0;
     }
 
-    private boolean cull(float x, float y, float z) {
-        return WorldRenderer.getInstance().getSectionGrid().getSectionAtBlockPos((int) x, (int) y, (int) z) != null &&
-               WorldRenderer.getInstance().getSectionGrid().getSectionAtBlockPos((int) x, (int) y, (int) z).getLastFrame() != WorldRenderer.getInstance().getLastFrame();
+    private boolean cull(WorldRenderer worldRenderer, float x, float y, float z) {
+        RenderSection section = worldRenderer.getSectionGrid().getSectionAtBlockPos((int) x, (int) y, (int) z);
+        return section != null && section.getLastFrame() != worldRenderer.getLastFrame();
     }
 
     @Override
     public ParticleRenderType getRenderType() {
         return null;
     }
-}
+            }
